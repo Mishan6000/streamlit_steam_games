@@ -7,3 +7,4 @@ seaborn
 numpy
 streamlit
 scikit-learn
+requests
