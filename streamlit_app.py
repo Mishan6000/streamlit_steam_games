@@ -5,6 +5,7 @@ import seaborn as sns
 import numpy as np
 import streamlit as st
 from sklearn.preprocessing import LabelEncoder
+import requests
 
 def main():
   data = pd.read_csv('steam.csv')
@@ -56,7 +57,64 @@ def main():
   
   """)
 
+  url = "http://127.0.0.1:8000"
+
+  st.header("Appendix: FastAPI - Game Data Management")
+
+  # Section for fetching game data
+  st.markdown("#### Get Sample from the Dataset")
+  start = st.number_input("Start Index", min_value=0, value=0)
+  limit = st.number_input("Number of Rows to Fetch", min_value=1, value=10)
+  developer_filter = st.text_input("Filter by Developer")
+
+  if st.button("Fetch Data"):
+    params = {"start": start, "limit": limit}
+    if developer_filter:
+      params["developer"] = developer_filter
+    response = requests.get(f"{url}/games/", params=params)
+
+    if response.status_code == 200:
+      df = response.json()
+      st.write(pd.DataFrame(df))
+    else:
+      st.error("!!! ERROR !!!")
+
+  # Section for appending a new game entry
+  st.markdown("#### Append New Game Entry")
+  new_game_entry = {
+    "name": st.text_input("Game Name"),
+    "release_date": st.text_input("Release Date (YYYY-MM-DD)"),
+    "english": st.number_input("English Support (1 for Yes, 0 for No)", min_value=0, max_value=1, value=1),
+    "developer": st.text_input("Developer"),
+    "publisher": st.text_input("Publisher"),
+    "platforms": st.text_input("Platforms (comma-separated)"),
+    "required_age": st.number_input("Required Age", min_value=0),
+    "categories": st.text_input("Categories (comma-separated)"),
+    "genres": st.text_input("Genres (comma-separated)"),
+    "steamspy_tags": st.text_input("SteamSpy Tags (comma-separated)"),
+    "achievements": st.number_input("Achievements", min_value=0),
+    "positive_ratings": st.number_input("Positive Ratings", min_value=0),
+    "negative_ratings": st.number_input("Negative Ratings", min_value=0),
+    "average_playtime": st.number_input("Average Playtime (in minutes)", min_value=0),
+    "median_playtime": st.number_input("Median Playtime (in minutes)", min_value=0),
+    "owners": st.text_input("Owners (e.g., '1M-2M')"),
+    "price": st.number_input("Price", min_value=0.0, format="%.2f")
+  }
+
+  if st.button("Submit New Game"):
+    response = requests.post(f"{url}/games/", json=new_game_entry)
+
+    if response.status_code == 200:
+      st.success("Successfully Added!")
+    else:
+      st.error("!!! ERROR !!!")
+
   st.write(data.describe())
+
+  st.write(data.isna().any())
+  st.write("No NaN values in the dataset")
+
+  st.write(data.dtypes)
 
   def preproc(df, cols_to_le, cols_to_ohe):
 
@@ -108,7 +166,7 @@ def main():
   st.write("""Hypothesis: the success of a game, which can be assessed by its rating and number of downloads, is determined by genre characteristics, various tags, and other factors.""")
 
   df = pd.DataFrame({"Rating" : train["rating"], "Owners" : train["owners"], "Price" : train["price"], "Realese_date" : train["release_date"]})
-  fig = px.scatter_3d(df, x='Realese_date', y='Rating', z='Price', color='Owners', log_y=True, colorscale='Viridis')
+  fig = px.scatter_3d(df, x='Realese_date', y='Rating', z='Price', color='Owners', log_y=True, color_discrete_sequence=px.colors.qualitative.Alphabet)
   fig
 
   f, ax = plt.subplots()
