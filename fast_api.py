@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
 import pandas as pd
 
@@ -7,10 +7,9 @@ app = FastAPI()
 
 # Define the data model using Pydantic
 class Game(BaseModel):
-    appid: int
     name: str
     release_date: str  # You can use a more specific type like datetime.date if needed
-    english: bool
+    english: int
     developer: str
     publisher: str
     platforms: str  # You can use List[str] if you want to store multiple platforms
@@ -21,33 +20,33 @@ class Game(BaseModel):
     achievements: int
     positive_ratings: int
     negative_ratings: int
-    average_playtime: float
-    median_playtime: float
+    average_playtime: int
+    median_playtime: int
     owners: str  # You might want to specify the format of this field (e.g., "1M-2M")
     price: float
 
 
 # Initialize an empty DataFrame or load your existing dataset
-data = pd.read_csv('steam.csv')
-print(data.head(5))
+data = pd.read_csv('steam.csv', sep=';')
+
 
 @app.post("/games/")
-async def create_game(game: Game):
-    global data  # Use the global data variable
+def add_game(new_game: Game):
+    """
+    POST method to add a new game to the dataset.
+    """
+    global data
+    # Create a new row based on the new game entry
+    new_row = new_game.dict()
+    new_row['appid'] = data['appid'].max() + 1  # Assign a new game_id
+    data = pd.concat([data, pd.DataFrame([new_row])], ignore_index=True)
 
-    # Convert the game data to a dictionary and append it to the DataFrame
-    game_dict = game.dict()
-
-    # Append the new game to the DataFrame
-    data = data.append(game_dict, ignore_index=True)
-
-    return {"message": "Game added successfully", "game": game_dict}
+    return {"message": "New game added successfully!", "data": new_row}
 
 @app.get("/games/")
-async def get_games():
-    global data  # Use the global data variable
-
-    # Convert the DataFrame to a list of dictionaries for JSON response
-    games_list = data.to_dict(orient='records')
-
-    return {"games": games_list}
+def get_games(start: int = 0, limit: int = 10, developer: str = Query(None)):
+    """
+    GET method with pagination and filtering by 'developer'.
+    """
+    filtered_df = data if developer is None else data[data['developer'] == developer]
+    return filtered_df.iloc[start:start + limit].to_dict(orient="records")
