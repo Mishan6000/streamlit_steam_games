@@ -6,4 +6,4 @@ matplotlib
 seaborn
 numpy
 streamlit
-sklearn
+scikit-learn
