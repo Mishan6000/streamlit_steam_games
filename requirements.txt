@@ -1,3 +1,9 @@
 pandas
 pydantic
 fastapi
+plotly
+matplotlib
+seaborn
+numpy
+streamlit
+sklearn
