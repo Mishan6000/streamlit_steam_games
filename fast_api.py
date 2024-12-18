@@ -27,7 +27,7 @@ class Game(BaseModel):
 
 
 # Initialize an empty DataFrame or load your existing dataset
-data = pd.read_csv('steam.csv', sep=';')
+data = pd.read_csv('steam.csv')
 
 
 @app.post("/games/")
